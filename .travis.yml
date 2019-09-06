@@ -1,51 +1,18 @@
 git:
   depth: 10
 
+os: linux
+dist: bionic
 language: c
 
-matrix:
-  include:
-    - name: "Ubuntu 16.04 / GCC"
-      os: linux
-      dist: xenial
-      compiler: gcc
-      env:
-        - CFLAGS='-Wall -Wextra'
-        - CPARAMS='--enable-werror'
-    - name: "Ubuntu 16.04 / Clang"
-      os: linux
-      dist: xenial
-      compiler: clang
-      env:
-        - CFLAGS='-Weverything -Wno-padded'
-        - CPARAMS='--enable-werror'
-    - name: "Ubuntu 18.04 / GCC"
-      os: linux
-      dist: bionic
-      compiler: gcc
-      env:
-        - CFLAGS='-Wall -Wextra'
-        - CPARAMS='--enable-werror'
-    - name: "Ubuntu 18.04 / Clang"
-      os: linux
-      dist: bionic
-      compiler: clang
-      env:
-        - CFLAGS='-Weverything -Wno-padded'
-        - CPARAMS='--enable-werror'
-    - name: "Ubuntu 18.04 / Clang Sanitizers"
-      os: linux
-      dist: bionic
-      compiler: clang
-      env:
-        - CFLAGS='-O1 -g -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined -fsanitize=nullability -fsanitize=implicit-conversion -fsanitize=integer'
-        - CPARAMS='--enable-werror'
-    - name: "OS X / Clang"
-      os: osx
-      osx_image: xcode11
-      compiler: clang
-      env:
-        - CFLAGS='-Weverything -Wno-padded -Wno-reserved-id-macro -Wno-gnu-zero-variadic-macro-arguments -Wno-sign-conversion -Wno-unreachable-code -Wno-missing-noreturn'
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "wArrvBEt4XPz93BYWppf2zrb6Ildn1H185ZuBq+svAcuJzFElL2oh/DXSB7LxsFHqrwe1LCLtQ/JUpakGTXFGvk78tOTlboBDr1TAevq/rK3GLev+FhUWGLalAqNfcDYsr0sKGFsD64SfhCUQcMTmiPF39+5hNt3ON1fppqClmk1C6EWiG+43hVLmkJXmaPcerz0PixJ57bKHnsTVofRi96kKoiUYrkERUkIt2+WmgyIobobv2twgIlejs04TLFHP7wPA/6KHxAspoxCOqUeBM+/dZAmfnXd+rWEPBToZPyV8GPi2NxqH0nFU1lqBLiBhZbt2AmjHp7UG4LcfJ86zAUvTBQJlC5HMXFHoH8MsQhqhcPoriT/Mon8b4jD3gGCMNAx+fw6gXIoiOR20Wh78xQCOoHAKjurTefPgtIIVsB8jk3N3Jj3O14PwL6n+gYcZ0s5ATOMN6HYBx8jVqljb4ze7TIXOsFZo4WwhAYYAe8zMaHpd0jMxQ1KKms/SFxxhRmXenoy2rioYGBjp3ljF/6Dq2W2/s1U1kxii1F6NP2HGpG7Z9uqVFTrFhXvHXiFukJOA2t4SVMI9BRID+WaZbjZIPfPrZoaVjmKkSI8iAOI0wS0+O2TZDTwzVNqxPjG+RGqvaQAXfYcpICEp6mUpGLSKHO1uF1vxZ4XImGDTBg="
+
+before_install:
+  #- echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 addons:
   apt:
@@ -55,16 +22,15 @@ addons:
       - libgd3
       - libgd-dev
       - check
-  homebrew:
-    packages:
-    - gd
-    - sqlite
-    - check
+  coverity_scan:
+    project:
+      name: "cgzones/vnstat"
+      description: "vnstat dev"
+    notification_email: cgzones@googlemail.com
+    build_command_prepend: "./configure; make clean"
+    build_command: "make"
+    branch_pattern: coverity_scan
+
 
 script:
- - ./configure ${CPARAMS} && make check || ( cat test.log ; cat test-suite.log ; exit 1 ) && ./vnstat --version && grep -iP 'sanitizer|runtime error' check_vnstat.log && exit 1 || true
-
-notifications:
-  email:
-    on_success: always
-    on_failure: always
+ - cat /home/travis/build/cgzones/vnstat/cov-int/scm_log.txt
